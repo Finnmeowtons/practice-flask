@@ -46,6 +46,7 @@
                         <h3>${data['place_name']}</h3> 
                         <img src="${data['image_url']}" alt="${data['place_name']}" style="width:100px">
                         <p>${data['place_description']}</p>
+                        <a href="https://en.wikipedia.org/wiki/${data['place_name']}">See more on Wikipedia</a>
                     </div>
                 `;
                 L.marker([data['latitude'], data['longitude']]).addTo(mymap)
