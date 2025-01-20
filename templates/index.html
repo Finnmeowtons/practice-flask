@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Practice Flask</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <form method="POST" action="/search">
+        <input type="text" name="place" placeholder="e.g., London">
+        <button type="submit">Get Info</button>
+    </form>
+
+
+    <div id="mapid" style="height: 800px;"></div>
+    <div id="music"></div>
+
+
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        const form = document.querySelector('form');
+        const resultsDiv = document.getElementById('results');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const place = document.querySelector('input[name="place"]').value;
+
+            const response = await fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'place': place
+                })
+            });
+            console.log("get data");
+
+            const data = await response.json();
+            console.log(data);
+            if (data['place_name'] && data['latitude'] && data['longitude']) {
+                const popupContent = `
+                    <div>
+                        <h3>${data['place_name']}</h3> 
+                        <img src="${data['image_url']}" alt="${data['place_name']}" style="width:100px">
+                        <p>${data['place_description']}</p>
+                    </div>
+                `;
+                L.marker([data['latitude'], data['longitude']]).addTo(mymap)
+                    .bindPopup(popupContent)
+                    .openPopup();
+
+                const musicDiv = document.getElementById('music');
+                musicDiv.innerHTML = '';
+
+                if (data['trending_tracks'].length > 0) {
+                    const trackUri = data['trending_tracks'][0];
+                    const iframe = document.createElement('iframe');
+                    iframe.src = `https://open.spotify.com/embed/track/${trackUri}?utm_source=generator}`;
+                    iframe.width = "100%";
+                    iframe.height = "352";
+                    iframe.frameBorder = "0";
+                    iframe.allowFullscreen = true;
+                    iframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+                    iframe.loading = "lazy";
+                    musicDiv.appendChild(iframe);
+                }
+                mymap.setView([data['latitude'], data['longitude']], 7);
+
+            } else {
+                console.log("Place not found or no coordinates available");
+            }
+        });
+
+        //Map Initialization
+        var mymap = L.map('mapid').setView([16.0471243, 120.3423972], 23);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mymap);
+    </script>
+</body>
+
+</html>
