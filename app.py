@@ -39,26 +39,26 @@ def search():
     country_code = get_country_code(place_name)
     
     print(f"country_code:{country_code}", file=sys.stderr)
-    if country_code:
-        try:
-            # Search for popular tracks in the country
-            query = f"trending songs in {place_name}"  # Construct a search query
-            offset = random.randint(1, 11)
+    try:
+        # Search for popular tracks in the country
+        query = f"trending songs in {place_name}"  # Construct a search query
+        offset = random.randint(1, 11)
+        if country_code:
             results = sp.search(q=query, type='track', market=country_code, offset= offset,limit=1)
-            print(f"results: {results}", file=sys.stderr)
-            trending_tracks = []
-            
-            print(f"RESULT: {results['tracks']['items'][0]['id']}", file=sys.stderr)
-            for item in results['tracks']['items']:
-                track_id = item['id']
-                # track_name = item['name']
-                # artist_name = item['artists'][0]['name']
-                trending_tracks.append(track_id)
+        else:
+            results = sp.search(q=query, type='track', offset= offset,limit=1)
+        print(f"results: {results}", file=sys.stderr)
+        trending_tracks = []
+        
+        print(f"RESULT: {results['tracks']['items'][0]['id']}", file=sys.stderr)
+        for item in results['tracks']['items']:
+            track_id = item['id']
+            # track_name = item['name']
+            # artist_name = item['artists'][0]['name']
+            trending_tracks.append(track_id)
 
-        except Exception as e:
-            print(f"Error fetching tracks from Spotify: {e}", file=sys.stderr)
-            trending_tracks = []
-    else:
+    except Exception as e:
+        print(f"Error fetching tracks from Spotify: {e}", file=sys.stderr)
         trending_tracks = []
 
     print(f"Trending tracks:{trending_tracks}", file=sys.stderr)
