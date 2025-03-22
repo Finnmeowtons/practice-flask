@@ -2,57 +2,105 @@
 <html>
 
 <head>
-    <title>Practice Flask</title>
+    <title>Popular Songs in the Area, if They Made it to Wikipedia</title>
+    <!-- Leaflet CSS for map display -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet JS library for interactive maps -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #mapid {
+            height: 500px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        iframe {
+            margin-top: 20px;
+            border-radius: 12px;
+        }
+    </style>
 </head>
 
 <body>
+    <h1>Popular Songs in the Area, if They Made it to Wikipedia</h1>
+    <!-- Form for submitting the place name -->
     <form method="POST" action="/search">
-        <input type="text" name="place" placeholder="e.g., London">
+        <input type="text" name="place" placeholder="Enter a place (e.g., London)">
         <button type="submit">Get Info</button>
     </form>
 
-
-    <div id="mapid" style="height: 800px;"></div>
+    <!-- Div to display the map using Leaflet -->
+    <div id="mapid"></div>
+    
+    <!-- Div to display the embedded Spotify song -->
     <div id="music"></div>
 
-
+    <!-- Spotify Web Playback SDK for embedding tracks -->
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
         const form = document.querySelector('form');
-        const resultsDiv = document.getElementById('results');
 
+        // Form submission event listener
         form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const place = document.querySelector('input[name="place"]').value;
+            event.preventDefault(); // Prevents default form submission
+            const place = document.querySelector('input[name="place"]').value; // Get user input
 
+            // Send POST request to backend for search
             const response = await fetch('/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({
-                    'place': place
-                })
+                body: new URLSearchParams({ 'place': place })
             });
-            console.log("get data");
+            console.log("Fetching data...");
 
-            const data = await response.json();
+            const data = await response.json(); // Parse JSON response
             console.log(data);
+
+            // Check if data includes place information
             if (data['place_name'] && data['latitude'] && data['longitude']) {
+                // Generate a popup with place details using Leaflet
                 const popupContent = `
                     <div>
                         <h3>${data['place_name']}</h3> 
-                        <img src="${data['image_url']}" alt="${data['place_name']}" style="width:100px">
+                        <img src="${data['image_url']}" alt="${data['place_name']}" style="width:100px; border-radius:8px;">
                         <p>${data['place_description']}</p>
-                        <a href="https://en.wikipedia.org/wiki/${data['place_name']}">See more on Wikipedia</a>
+                        <a href="https://en.wikipedia.org/wiki/${data['place_name']}" target="_blank">See more on Wikipedia</a>
                     </div>
                 `;
                 L.marker([data['latitude'], data['longitude']]).addTo(mymap)
                     .bindPopup(popupContent)
                     .openPopup();
 
+                // Display the Spotify song if available
                 const musicDiv = document.getElementById('music');
                 musicDiv.innerHTML = '';
 
@@ -68,6 +116,8 @@
                     iframe.loading = "lazy";
                     musicDiv.appendChild(iframe);
                 }
+                
+                // Adjust map view to center on the place
                 mymap.setView([data['latitude'], data['longitude']], 7);
 
             } else {
@@ -75,7 +125,7 @@
             }
         });
 
-        //Map Initialization
+        // Initialize map with a default view (Dagupan City coordinates)
         var mymap = L.map('mapid').setView([16.0471243, 120.3423972], 23);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
